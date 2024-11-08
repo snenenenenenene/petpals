@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  role            String    @default("user")
+  coins           Int       @default(100)
+  accounts        Account[]
+  sessions        Session[]
+  pets            Pet[]
+  achievements    Achievement[]
+  lastLoginDate   DateTime?
+  loginStreak     Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  @@index([email])
+}
+
+model Pet {
+  id          String    @id @default(cuid())
+  name        String
+  userId      String
+  type        String    @default("dog")
+  level       Int       @default(1)
+  experience  Int       @default(0)
+  happiness   Int       @default(100)
+  hunger      Int       @default(100)
+  energy      Int       @default(100)
+  hygiene     Int       @default(100)
+  lastFed     DateTime  @default(now())
+  lastPlayed  DateTime  @default(now())
+  lastGroomed DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  items       PetItem[]
+  skills      PetSkill[]
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+model PetItem {
+  id        String   @id @default(cuid())
+  petId     String
+  itemId    String
+  equipped  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  pet       Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  item      Item     @relation(fields: [itemId], references: [id])
+
+  @@index([petId])
+  @@index([itemId])
+}
+
+model Item {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  type        String    // accessory, food, toy, etc.
+  rarity      String    @default("common")
+  price       Int
+  effect      Json?     // Store effects like {"happiness": 10, "energy": 5}
+  image       String?
+  petItems    PetItem[]
+}
+
+model PetSkill {
+  id        String   @id @default(cuid())
+  petId     String
+  name      String
+  level     Int      @default(1)
+  createdAt DateTime @default(now())
+
+  pet       Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  progress    Int      @default(0)
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model DailyReward {
+  id        String   @id @default(cuid())
+  userId    String
+  day       Int
+  claimed   Boolean  @default(false)
+  claimedAt DateTime?
+  reward    Json     // Store reward data like {"coins": 100, "items": ["food"]}
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  id         String   @id @default(cuid())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

@@ -6,6 +6,7 @@ import { AnimationProvider } from './animation-provider';
 import { GameStateProvider } from './game-state-provider';
 import { SoundProvider } from './sound-provider';
 import { ToastProvider } from './toast-provider';
+import { SessionProvider } from 'next-auth/react';
 
 interface ProvidersProps {
 	children: React.ReactNode;
@@ -15,6 +16,7 @@ export function Providers({ children }: ProvidersProps) {
 	return (
 		<ThemeProvider>
 			<GameStateProvider>
+			<SessionProvider>
 				<AnimationProvider>
 					<SoundProvider>
 						<ToastProvider>
@@ -22,6 +24,7 @@ export function Providers({ children }: ProvidersProps) {
 						</ToastProvider>
 					</SoundProvider>
 				</AnimationProvider>
+				</SessionProvider>
 			</GameStateProvider>
 		</ThemeProvider>
 	);

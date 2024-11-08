@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+.env
+prisma/migrations
 
 # debug
 npm-debug.log*
