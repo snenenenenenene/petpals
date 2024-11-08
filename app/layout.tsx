@@ -2,7 +2,7 @@ import './globals.css'
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html suppressHydrationWarning>
-      <body>
+      <body className=' font-sans'>
         {children}
       </body>
     </html>

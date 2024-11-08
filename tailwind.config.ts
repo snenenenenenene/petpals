@@ -73,9 +73,9 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['var(--font-inter)'],
-        heading: ['var(--font-quicksand)'],
-        display: ['var(--font-caveat)'],
+        sans: ['Inter'],
+        heading: ['Quicksand'],
+        display: ['Caveat'],
       },
       keyframes: {
         'accordion-down': {
