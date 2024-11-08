@@ -1,24 +1,61 @@
-"use client"
-// app/(components)/UI/ThemeToggle.tsx
-import { useState, FC } from "react";
+// components/ThemeToggle.tsx
+'use client';
 
-const ThemeToggle: FC = () => {
-	const [theme, setTheme] = useState("light");
+import { useTheme } from '@/hooks/useTheme';
+import { Button } from '@/components/ui/Button';
+import { Sun, Moon, Monitor } from 'lucide-react';
 
-	const toggleTheme = () => {
-		const newTheme = theme === "light" ? "dark" : "light";
-		setTheme(newTheme);
-		document.documentElement.classList.toggle("dark");
-	};
+export function ThemeToggle() {
+	const { theme, setTheme } = useTheme();
 
 	return (
-		<button
-			onClick={toggleTheme}
-			className="bg-accent text-white px-4 py-2 rounded-lg hover:shadow-md transition duration-200"
-		>
-			{theme === "light" ? "Switch to Dark" : "Switch to Light"}
-		</button>
+		<div className="flex items-center gap-2">
+			<Button
+				variant={theme === 'light' ? 'default' : 'ghost'}
+				size="icon"
+				onClick={() => setTheme('light')}
+			>
+				<Sun className="h-[1.2rem] w-[1.2rem]" />
+				<span className="sr-only">Light</span>
+			</Button>
+			<Button
+				variant={theme === 'dark' ? 'default' : 'ghost'}
+				size="icon"
+				onClick={() => setTheme('dark')}
+			>
+				<Moon className="h-[1.2rem] w-[1.2rem]" />
+				<span className="sr-only">Dark</span>
+			</Button>
+			<Button
+				variant={theme === 'system' ? 'default' : 'ghost'}
+				size="icon"
+				onClick={() => setTheme('system')}
+			>
+				<Monitor className="h-[1.2rem] w-[1.2rem]" />
+				<span className="sr-only">System</span>
+			</Button>
+		</div>
 	);
-};
+}
 
-export default ThemeToggle;
+// Example of using preferences
+function SoundSettings() {
+	const { preferences, updatePreferences } = useUserPreferences();
+
+	return (
+		<div>
+			<Switch
+				checked={preferences.soundEnabled}
+				onCheckedChange={(checked) =>
+					updatePreferences({ soundEnabled: checked })
+				}
+			/>
+			<Switch
+				checked={preferences.musicEnabled}
+				onCheckedChange={(checked) =>
+					updatePreferences({ musicEnabled: checked })
+				}
+			/>
+		</div>
+	);
+}

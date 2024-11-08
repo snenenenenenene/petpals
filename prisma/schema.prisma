@@ -47,6 +47,7 @@ model User {
   role            String    @default("user")
   coins           Int       @default(100)
   accounts        Account[]
+    preferences      UserPreferences?
   sessions        Session[]
   pets            Pet[]
   achievements    Achievement[]
@@ -151,4 +152,19 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model UserPreferences {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  theme            String    @default("default") // default, dark, custom
+  soundEnabled     Boolean   @default(true)
+  musicEnabled     Boolean   @default(true)
+  notifications    Boolean   @default(true)
+  language         String    @default("en")
+  customThemeColor String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

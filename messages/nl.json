@@ -1,0 +1,66 @@
+  {
+	"Home": {
+	  "title": "Welkom bij PetPals",
+	  "description": "Je virtuele huisdier wacht op je! Begin je reis van vriendschap en zorg.",
+	  "startButton": "Begin met Spelen"
+	},
+	
+	"navigation": {
+	  "profile": "Profiel",
+	  "preferences": "Voorkeuren",
+	  "achievements": "Prestaties"
+	},
+	"profile": {
+	  "stats": {
+		"title": "Statistieken",
+		"loginStreak": "Inlog Reeks",
+		"loginStreakDays": "{count} dagen",
+		"totalPets": "Totaal Huisdieren",
+		"joinedOn": "Lid sinds {date}",
+		"level": "Niveau"
+	  }
+	},
+	"preferences": {
+	  "theme": {
+		"title": "Thema",
+		"default": "Standaard",
+		"dark": "Donker",
+		"light": "Licht"
+	  },
+	  "sound": {
+		"title": "Geluid & Meldingen",
+		"soundEffects": "Geluidseffecten",
+		"backgroundMusic": "Achtergrondmuziek",
+		"notifications": "Meldingen"
+	  },
+	  "language": {
+		"title": "Taal",
+		"select": "Selecteer Taal"
+	  }
+	},
+	"achievements": {
+	  "title": "Prestaties",
+	  "none": "Nog geen prestaties"
+	},
+	"common": {
+	  "loading": "Laden...",
+	  "save": "Opslaan",
+	  "cancel": "Annuleren",
+	  "days": "dagen",
+	  "pets": "huisdieren"
+	},
+	"pet": {
+	  "status": {
+		"happy": "Blij",
+		"hungry": "Hongerig",
+		"tired": "Moe",
+		"playful": "Speels"
+	  },
+	  "actions": {
+		"feed": "Voeren",
+		"play": "Spelen",
+		"sleep": "Slapen",
+		"clean": "Schoonmaken"
+	  }
+	}
+  }
