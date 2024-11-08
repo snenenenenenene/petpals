@@ -1,25 +1,44 @@
 // app/layout.tsx
-
 import "./globals.css";
-import { ReactNode } from "react";
-import ThemeToggle from "./components/UI/ThemeToggle";
+import { Inter, Quicksand, Caveat } from 'next/font/google';
+import { cn } from "@/lib/utils";
+import { Providers } from "@/providers";
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
+
+const quicksand = Quicksand({
+  subsets: ['latin'],
+  variable: '--font-quicksand',
+});
+
+const caveat = Caveat({
+  subsets: ['latin'],
+  variable: '--font-caveat',
+});
 
 export const metadata = {
   title: "PetPals",
-  description: "A virtual pet care app to nurture your digital pet.",
+  description: "Your virtual pet companion",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en">
-      <body className="bg-background text-text font-sans">
-        <div className="flex justify-between items-center p-4">
-          <h1 className="text-2xl font-bold">PetPals</h1>
-          <ThemeToggle />
-        </div>
-        <main className="flex flex-col items-center min-h-screen">
+    <html lang="en" className={cn(
+      inter.variable,
+      quicksand.variable,
+      caveat.variable,
+    )}>
+      <body className="font-sans antialiased">
+        <Providers>
           {children}
-        </main>
+        </Providers>
       </body>
     </html>
   );

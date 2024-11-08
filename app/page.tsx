@@ -1,33 +1,33 @@
 // app/page.tsx
-"use client";
+'use client';
 
-import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/Button';
+import { useRouter } from 'next/navigation';
 
-export default function HomePage() {
+export default function Home() {
+  const router = useRouter();
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-text px-4 text-center">
-      <motion.h1
-        className="text-5xl font-bold mb-6"
-        initial={{ opacity: 0, y: -20 }}
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-neutral-50 flex flex-col items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        className="text-center"
       >
-        Welcome to PetPals!
-      </motion.h1>
-
-      <p className="text-lg mb-8 max-w-lg">
-        PetPals is a virtual pet care experience where you can adopt, nurture, and interact with your own digital pet. Start your journey and make your new pet friend happy!
-      </p>
-
-      <Link href="/dashboard">
-        <motion.button
-          className="bg-primary text-white px-6 py-3 rounded-lg text-lg font-semibold hover:shadow-lg transition"
-          whileHover={{ scale: 1.05 }}
+        <h1 className="text-4xl md:text-6xl font-heading font-bold text-primary-800 mb-4">
+          Welcome to PetPals
+        </h1>
+        <p className="text-lg text-primary-600 mb-8 max-w-md mx-auto">
+          Your virtual pet companion awaits! Start your journey of friendship and care.
+        </p>
+        <Button
+          onClick={() => router.push('/dashboard')}
+          className="text-lg px-8 py-4"
         >
-          Get Started
-        </motion.button>
-      </Link>
+          Start Playing
+        </Button>
+      </motion.div>
     </div>
   );
 }

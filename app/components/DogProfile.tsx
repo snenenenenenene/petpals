@@ -1,7 +1,7 @@
 "use client"
 // app/components/DogProfile.tsx
 import { FC } from "react";
-import Button from "./UI/Button";
+import { Button } from "@/components/ui/Button";
 import StatDisplay from "./StatDisplay";
 import { useDogStore } from "../../store/dogStore";
 
