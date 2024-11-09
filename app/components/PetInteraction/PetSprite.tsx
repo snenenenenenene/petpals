@@ -1,186 +1,290 @@
 // components/PetInteraction/PetSprite.tsx
 'use client';
 
-import { motion, useAnimation, PanInfo, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
-import { useDogStore } from '@/store/dogStore';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef } from 'react';
+import { useParams } from 'next/navigation';
+import { useRouter } from '@/i18n/routing';
+import { usePetStore } from '@/store/petStore';
+import { PetStats } from '../PetStats';
 import { cn } from '@/lib/utils';
+import {
+	Heart,
+	MapPin,
+	Bath,
+	Bone,
+	Gamepad2,
+	Clock,
+	Star
+} from 'lucide-react';
+import { useSounds } from '@/hooks/useSounds';
 
-type PetState = 'idle' | 'happy' | 'sleeping' | 'walking' | 'playing' | 'eating';
-type PetMood = 'happy' | 'neutral' | 'tired';
-
-interface PetSpriteProps {
-	className?: string;
-	onInteraction?: (type: string) => void;
+interface Action {
+	id: string;
+	icon: typeof Heart;
+	label: string;
+	description: string;
+	color: string;
+	energyCost: number;
+	cooldown?: number; // in seconds
+	handler: () => void;
 }
 
-export const PetSprite = ({ className, onInteraction }: PetSpriteProps) => {
-	const controls = useAnimation();
-	const [petState, setPetState] = useState<PetState>('idle');
-	const [petMood, setPetMood] = useState<PetMood>('neutral');
-	const [lastPetTime, setLastPetTime] = useState(Date.now());
-	const [petCounter, setPetCounter] = useState(0);
+export const PetSprite = ({ className }: { className?: string }) => {
+	const params = useParams();
+	const router = useRouter();
+	const [showStats, setShowStats] = useState(false);
+	const [showActions, setShowActions] = useState(false);
+	const [position, setPosition] = useState({ x: 0, y: 0 });
 	const boundsRef = useRef<HTMLDivElement>(null);
-	const { happiness, energy, updateHappiness, updateEnergy } = useDogStore();
+	const { stats, updateStats } = usePetStore();
+	const { playSound } = useSounds();
 
-	// Initialize random idle movements
-	useEffect(() => {
-		const interval = setInterval(() => {
-			if (petState === 'idle') {
-				const randomMove = Math.random();
-				if (randomMove > 0.7) {
-					const x = (Math.random() - 0.5) * 100;
-					const y = (Math.random() - 0.5) * 100;
-					controls.start({
-						x: x,
-						y: y,
-						transition: {
-							duration: 2,
-							ease: "easeInOut"
-						}
+	const actions: Action[] = [
+		{
+			id: 'pet',
+			icon: Heart,
+			label: 'Pet',
+			description: 'Show some love',
+			color: 'bg-red-500',
+			energyCost: 0,
+			handler: () => {
+				playSound('button');
+				updateStats({
+					happiness: Math.min(stats.happiness + 5, 100),
+					energy: Math.min(stats.energy + 2, 100) // Dev mode energy boost
+				});
+				showHeartEmoji(position.x, position.y);
+			}
+		},
+		{
+			id: 'adventure',
+			icon: MapPin,
+			label: 'Adventure',
+			description: 'Take your pet for a walk',
+			color: 'bg-blue-500',
+			energyCost: 20,
+			cooldown: 1800,
+			handler: () => {
+				playSound('button');
+				if (stats.energy >= 20) {
+					router.push('/adventure');
+				} else {
+					// Show energy warning toast
+					console.log('Not enough energy!');
+				}
+			}
+		},
+		{
+			id: 'wash',
+			icon: Bath,
+			label: 'Wash',
+			description: 'Keep your pet clean',
+			color: 'bg-cyan-500',
+			energyCost: 15,
+			cooldown: 3600,
+			handler: () => {
+				playSound('button');
+				if (stats.energy >= 15) {
+					updateStats({
+						hygiene: 100,
+						happiness: Math.min(stats.happiness + 10, 100),
+						energy: stats.energy - 15
 					});
 				}
 			}
-		}, 3000);
-
-		return () => clearInterval(interval);
-	}, [controls, petState]);
-
-	// Update mood based on happiness and energy
-	useEffect(() => {
-		if (happiness > 70 && energy > 50) {
-			setPetMood('happy');
-		} else if (energy < 30) {
-			setPetMood('tired');
-		} else {
-			setPetMood('neutral');
-		}
-	}, [happiness, energy]);
-
-	const handlePet = () => {
-		const now = Date.now();
-		if (now - lastPetTime < 1000) { // Within 1 second
-			setPetCounter(prev => prev + 1);
-			if (petCounter > 5) {
-				triggerPlayfulJump();
+		},
+		{
+			id: 'feed',
+			icon: Bone,
+			label: 'Feed',
+			description: 'Time for a snack',
+			color: 'bg-amber-500',
+			energyCost: 0,
+			cooldown: 1800,
+			handler: () => {
+				playSound('button');
+				updateStats({
+					hunger: Math.min(stats.hunger + 30, 100),
+					happiness: Math.min(stats.happiness + 5, 100),
+					energy: Math.min(stats.energy + 10, 100)
+				});
 			}
-		} else {
-			setPetCounter(1);
+		},
+		{
+			id: 'play',
+			icon: Gamepad2,
+			label: 'Play',
+			description: 'Play a mini-game',
+			color: 'bg-purple-500',
+			energyCost: 10,
+			cooldown: 900,
+			handler: () => {
+				playSound('button');
+				if (stats.energy >= 10) {
+					// Navigate to mini-game selection
+					console.log('Opening mini-game selection...');
+				}
+			}
 		}
-		setLastPetTime(now);
+	];
 
-		updateHappiness(2);
-		setPetState('happy');
-		wiggleAnimation();
+	const handlePet = (e: React.MouseEvent) => {
+		const bounds = e.currentTarget.getBoundingClientRect();
+		const x = e.clientX - bounds.left;
+		const y = e.clientY - bounds.top;
+		setPosition({ x, y });
+		setShowStats(true);
+		setShowActions(!showActions); // Toggle actions panel
+		playSound('button');
 	};
 
-	const handleDragStart = () => {
-		setPetState('playing');
-		controls.start({
-			scale: 0.9,
-			transition: { duration: 0.2 }
+	const showHeartEmoji = (x: number, y: number) => {
+		const heart = document.createElement('div');
+		heart.innerHTML = '❤️';
+		heart.className = 'absolute text-2xl pointer-events-none';
+		heart.style.left = `${x}px`;
+		heart.style.top = `${y}px`;
+		boundsRef.current?.appendChild(heart);
+
+		const animation = heart.animate([
+			{ transform: 'translate(-50%, -50%) scale(0)', opacity: 1 },
+			{ transform: 'translate(-50%, -150%) scale(1.5)', opacity: 0 }
+		], {
+			duration: 1000,
+			easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
 		});
-	};
 
-	const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-		setPetState('idle');
-		controls.start({
-			scale: 1,
-			transition: { type: "spring", stiffness: 300, damping: 20 }
-		});
-
-		// If thrown with enough velocity, trigger jump
-		if (Math.abs(info.velocity.x) > 500 || Math.abs(info.velocity.y) > 500) {
-			triggerPlayfulJump();
-		}
-	};
-
-	const wiggleAnimation = async () => {
-		await controls.start({
-			rotate: [0, -10, 10, -10, 10, 0],
-			transition: { duration: 0.5 }
-		});
-		setPetState('idle');
-	};
-
-	const triggerPlayfulJump = async () => {
-		setPetState('playing');
-		await controls.start({
-			y: [-50, 0],
-			scale: [1, 1.2, 1],
-			transition: { duration: 0.5, type: "spring" }
-		});
-		setPetState('idle');
-	};
-
-	const getPetStyles = () => {
-		const baseStyles = "w-32 h-32 rounded-full";
-		switch (petMood) {
-			case 'happy':
-				return cn(baseStyles, 'bg-primary-300');
-			case 'tired':
-				return cn(baseStyles, 'bg-neutral-300');
-			default:
-				return cn(baseStyles, 'bg-primary-200');
-		}
-	};
-
-	const getPetEmoji = () => {
-		switch (petState) {
-			case 'happy':
-				return '😊';
-			case 'sleeping':
-				return '😴';
-			case 'playing':
-				return '🤪';
-			case 'eating':
-				return '😋';
-			case 'walking':
-				return '🚶';
-			default:
-				return petMood === 'happy' ? '🐕' : petMood === 'tired' ? '😩' : '🐕';
-		}
+		animation.onfinish = () => heart.remove();
 	};
 
 	return (
 		<div
 			ref={boundsRef}
 			className={cn("relative w-full h-full overflow-hidden", className)}
+			onMouseLeave={() => setShowStats(false)}
 		>
+			{/* Pet Sprite */}
 			<motion.div
-				drag
-				dragConstraints={boundsRef}
-				dragElastic={0.2}
-				dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
-				onDragStart={handleDragStart}
-				onDragEnd={handleDragEnd}
-				animate={controls}
-				whileHover={{ scale: 1.05 }}
-				onTap={handlePet}
-				className={cn(
-					getPetStyles(),
-					"cursor-grab active:cursor-grabbing",
-					"flex items-center justify-center",
-					"select-none",
-					"shadow-lg"
-				)}
+				className="absolute cursor-pointer"
+				style={{
+					left: '50%',
+					top: '50%',
+					transform: 'translate(-50%, -50%)'
+				}}
+				onClick={handlePet}
+				whileHover={{ scale: 1.1 }}
+				whileTap={{ scale: 0.9 }}
 			>
-				<span className="text-4xl">{getPetEmoji()}</span>
-
-				{/* Interaction Indicators */}
-				<AnimatePresence>
-					{petState === 'happy' && (
-						<motion.div
-							initial={{ opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: -20 }}
-							exit={{ opacity: 0 }}
-							className="absolute -top-8 left-1/2 transform -translate-x-1/2"
-						>
-							❤️
-						</motion.div>
-					)}
-				</AnimatePresence>
+				<div className="w-32 h-32 bg-primary-100 rounded-full flex items-center justify-center">
+					<span className="text-4xl select-none">🐕</span>
+				</div>
 			</motion.div>
+
+			{/* Action Panel */}
+			<AnimatePresence>
+				{showActions && (
+					<motion.div
+						initial={{ x: '100%', opacity: 0 }}
+						animate={{ x: 0, opacity: 1 }}
+						exit={{ x: '100%', opacity: 0 }}
+						transition={{ type: "spring", damping: 20 }}
+						className="absolute top-0 right-0 bottom-0 w-80 bg-white/90 backdrop-blur-sm shadow-lg"
+					>
+						<div className="p-6 h-full">
+							<div className="mb-6">
+								<h3 className="text-lg font-bold">Actions</h3>
+								<p className="text-sm text-gray-500">Choose an activity</p>
+							</div>
+
+							{/* Energy Display */}
+							<div className="mb-6 bg-amber-50 rounded-lg p-4">
+								<div className="flex items-center gap-2 text-amber-500 mb-2">
+									<Star className="w-5 h-5" />
+									<span className="font-medium">Energy</span>
+								</div>
+								<div className="text-2xl font-bold text-amber-700">
+									{stats.energy}/100
+								</div>
+							</div>
+
+							<div className="space-y-3">
+								{actions.map((action) => (
+									<ActionButton
+										key={action.id}
+										action={action}
+										stats={stats}
+									/>
+								))}
+							</div>
+						</div>
+					</motion.div>
+				)}
+			</AnimatePresence>
+
+			{/* Stats Display */}
+			<AnimatePresence>
+				{showStats && !showActions && (
+					<PetStats
+						x={position.x}
+						y={position.y}
+						stats={stats}
+					/>
+				)}
+			</AnimatePresence>
 		</div>
 	);
 };
+
+interface ActionButtonProps {
+	action: Action;
+	stats: {
+		energy: number;
+		[key: string]: number;
+	};
+}
+
+function ActionButton({ action, stats }: ActionButtonProps) {
+	const isDisabled = stats.energy < action.energyCost;
+	const [timeLeft, setTimeLeft] = useState(0);
+
+	return (
+		<motion.button
+			whileHover={{ scale: isDisabled ? 1 : 1.02 }}
+			whileTap={{ scale: isDisabled ? 1 : 0.98 }}
+			className={cn(
+				"w-full p-4 rounded-xl",
+				"bg-white shadow-sm",
+				isDisabled ? "opacity-50 cursor-not-allowed" : "hover:shadow-md",
+				"transition-all duration-200"
+			)}
+			disabled={isDisabled}
+			onClick={action.handler}
+		>
+			<div className="flex items-start gap-3">
+				<div className={cn(
+					"p-2 rounded-lg",
+					action.color
+				)}>
+					<action.icon className="w-5 h-5 text-white" />
+				</div>
+				<div className="flex-1 text-left">
+					<div className="font-medium">{action.label}</div>
+					<div className="text-sm text-gray-500">{action.description}</div>
+					{action.energyCost > 0 && (
+						<div className="flex items-center gap-1 mt-1 text-xs text-amber-500">
+							<Star className="w-4 h-4" />
+							{action.energyCost} energy
+						</div>
+					)}
+				</div>
+				{timeLeft > 0 && (
+					<div className="text-sm text-gray-500">
+						<Clock className="w-4 h-4 mb-1" />
+						{Math.ceil(timeLeft / 60)}m
+					</div>
+				)}
+			</div>
+		</motion.button>
+	);
+}

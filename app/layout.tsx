@@ -1,10 +1,13 @@
-import './globals.css'
-export default function Layout({ children }: { children: React.ReactNode }) {
+import "./globals.css"
+// app/layout.tsx
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html suppressHydrationWarning>
-      <body className=' font-sans'>
-        {children}
-      </body>
+    <html lang="en" suppressHydrationWarning>
+      <body>{children}</body>
     </html>
-  )
+  );
 }

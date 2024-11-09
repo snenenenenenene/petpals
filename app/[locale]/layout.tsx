@@ -1,7 +1,6 @@
 // app/[locale]/layout.tsx
 import { NextIntlClientProvider } from 'next-intl';
 import { Providers } from '@/providers';
-import { headers } from 'next/headers';
 import { locales } from '@/i18n/config';
 
 async function getMessages(locale: string) {
@@ -23,11 +22,8 @@ export default async function LocaleLayout({
 	const messages = await getMessages(locale);
 
 	return (
-
 		<NextIntlClientProvider locale={locale} messages={messages}>
-			<Providers>
-				{children}
-			</Providers>
+			<Providers>{children}</Providers>
 		</NextIntlClientProvider>
 	);
 }

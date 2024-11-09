@@ -2,13 +2,13 @@
 // providers/index.tsx
 'use client';
 
-import { ThemeProvider } from './theme-provider';
 import { AnimationProvider } from './animation-provider';
 import { GameStateProvider } from './game-state-provider';
 import { SoundProvider } from './sound-provider';
 import { ToastProvider } from './toast-provider';
 import { LocaleProvider } from './locale-provider';
 import { SessionProvider } from 'next-auth/react';
+import { NextIntlClientProvider } from 'next-intl';
 
 interface ProvidersProps {
 	children: React.ReactNode;
@@ -23,18 +23,16 @@ export function Providers({
 }: ProvidersProps) {
 	return (
 
-		<ThemeProvider>
-			<GameStateProvider>
-				<SessionProvider>
-					<AnimationProvider>
-						<SoundProvider>
-							<ToastProvider>
+		<GameStateProvider>
+			<SessionProvider>
+				<AnimationProvider>
+					<SoundProvider>
+						<ToastProvider>
 								{children}
-							</ToastProvider>
-						</SoundProvider>
-					</AnimationProvider>
-				</SessionProvider>
-			</GameStateProvider>
-		</ThemeProvider>
+						</ToastProvider>
+					</SoundProvider>
+				</AnimationProvider>
+			</SessionProvider>
+		</GameStateProvider>
 	);
 }
