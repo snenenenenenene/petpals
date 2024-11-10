@@ -2,8 +2,6 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/routing';
 import { Button } from '@/components/ui';
 import {
   Bone,
@@ -15,6 +13,7 @@ import {
   Package,
   ChevronRight
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const features = [
   {
@@ -48,7 +47,6 @@ const features = [
 ];
 
 export default function Home() {
-  const t = useTranslations('Home');
   const router = useRouter();
 
   return (
@@ -114,7 +112,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            {t('title')}
+            Welcome to PetPals
           </motion.h1>
 
           <motion.p
@@ -123,7 +121,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            {t('description')}
+            Your virtual pet companion awaits! Start your journey of friendship and care.
           </motion.p>
 
           <motion.div
@@ -136,7 +134,7 @@ export default function Home() {
               onClick={() => router.push('/dashboard')}
               className="text-lg px-8 py-6 rounded-2xl shadow-lg hover:shadow-xl transition-all"
             >
-              <span>{t('startButton')}</span>
+              <span>Start Playing</span>
               <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
           </motion.div>

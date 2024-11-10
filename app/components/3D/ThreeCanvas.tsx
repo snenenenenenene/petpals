@@ -24,8 +24,6 @@ import {
 	X,
 	ChevronRight,
 	Users2,
-	Shield,
-	Star
 } from 'lucide-react';
 import { useSounds } from '@/hooks/useSounds';
 import { GLTF } from 'three-stdlib';

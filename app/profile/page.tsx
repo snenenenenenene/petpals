@@ -87,7 +87,7 @@ export default function ProfilePage() {
 	const [activeTab, setActiveTab] = useState<ProfileTab>('profile');
 	const router = useRouter();
 	const t = useTranslations('Profile');
-	const { stats, info: petInfo } = usePetStore();
+	// const { stats, info: petInfo } = usePetStore();
 	const { achievements, points: achievementPoints } = useAchievementStore();
 
 	// Get real stats

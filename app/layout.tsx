@@ -1,3 +1,5 @@
+import { Providers } from "@/providers";
+import { ToastContainer } from "./components/ui/ToastContainer";
 import "./globals.css"
 // app/layout.tsx
 export default function RootLayout({
@@ -7,7 +9,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>{children}</body>
+
+      <body>
+        <ToastContainer />
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }
