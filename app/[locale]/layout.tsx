@@ -2,6 +2,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { Providers } from '@/providers';
 import { locales } from '@/i18n/config';
+import { ToastContainer } from '../components/ui';
 
 async function getMessages(locale: string) {
 	try {
@@ -23,7 +24,11 @@ export default async function LocaleLayout({
 
 	return (
 		<NextIntlClientProvider locale={locale} messages={messages}>
-			<Providers>{children}</Providers>
+			<Providers>
+				{/* <ToastContainer> */}
+					{children}
+				{/* </ToastContainer> */}
+			</Providers>
 		</NextIntlClientProvider>
 	);
 }

@@ -20,12 +20,13 @@ export const useInteractionStore = create<InteractionState>()(
         if (!cooldowns[activityId]) return true;
         
         const now = Date.now();
-        return now >= cooldowns[activityId];
+        // return now >= cooldowns[activityId];
+        return true;
       },
 
       startCooldown: (activityId) => {
         const cooldownMinutes = getActivityCooldown(activityId);
-        const cooldownTime = cooldownMinutes * 60 * 1000; // Convert minutes to milliseconds
+        const cooldownTime = cooldownMinutes * 60 * 0; // Convert minutes to milliseconds
         
         set((state) => ({
           cooldowns: {
