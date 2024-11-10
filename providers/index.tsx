@@ -6,9 +6,7 @@ import { AnimationProvider } from './animation-provider';
 import { GameStateProvider } from './game-state-provider';
 import { SoundProvider } from './sound-provider';
 import { ToastProvider } from './toast-provider';
-import { LocaleProvider } from './locale-provider';
 import { SessionProvider } from 'next-auth/react';
-import { NextIntlClientProvider } from 'next-intl';
 
 interface ProvidersProps {
 	children: React.ReactNode;
@@ -18,8 +16,6 @@ interface ProvidersProps {
 
 export function Providers({
 	children,
-	locale = 'en', // Default to English if not provided
-	messages = {}
 }: ProvidersProps) {
 	return (
 
@@ -28,7 +24,7 @@ export function Providers({
 				<AnimationProvider>
 					<SoundProvider>
 						<ToastProvider>
-								{children}
+							{children}
 						</ToastProvider>
 					</SoundProvider>
 				</AnimationProvider>
