@@ -1,8 +1,8 @@
 // app/[locale]/layout.tsx
 import { NextIntlClientProvider } from 'next-intl';
 import { Providers } from '@/providers';
+import { ToastContainer } from '@/components/ui/ToastContainer';
 import { locales } from '@/i18n/config';
-import { ToastContainer } from '../components/ui';
 
 async function getMessages(locale: string) {
 	try {
@@ -23,13 +23,16 @@ export default async function LocaleLayout({
 	const messages = await getMessages(locale);
 
 	return (
-		<NextIntlClientProvider locale={locale} messages={messages}>
-			<Providers>
-				{/* <ToastContainer> */}
-					{children}
-				{/* </ToastContainer> */}
-			</Providers>
-		</NextIntlClientProvider>
+		<html lang={locale} suppressHydrationWarning>
+			<body>
+				<NextIntlClientProvider locale={locale} messages={messages}>
+					<Providers>
+						{children}
+						<ToastContainer />
+					</Providers>
+				</NextIntlClientProvider>
+			</body>
+		</html>
 	);
 }
 
