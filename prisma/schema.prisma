@@ -55,45 +55,152 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  // Enhanced social features
+  status            String?   // Custom status message
+  currentActivity   ActivityStatus?
+  preferredPetId    String?  // Currently selected pet
+  lastActive        DateTime @default(now())
+
   // Relationships
   accounts        Account[]
   sessions        Session[]
-  pets           Pet[]
-  items          UserItem[]
-  achievements   Achievement[]
-  preferences    UserPreferences?
+  pets            Pet[]
+  items           UserItem[]
+  achievements    Achievement[]
+  preferences     UserPreferences?
+  activityLogs    ActivityLog[]     // Added this relation
 
   // Friend system relations
   friendsRequestsSent     FriendRequest[] @relation("SentFriendRequests")
   friendsRequestsReceived FriendRequest[] @relation("ReceivedFriendRequests")
   friends                 Friendship[]    @relation("UserFriends")
   friendsOf               Friendship[]    @relation("FriendsOf")
-  sentInvites            Invitation[]    @relation("SentInvites")
-  receivedInvites        Invitation[]    @relation("ReceivedInvites")
-  
-  // Activity related
-  activityLogs           ActivityLog[]
-  notifications          Notification[]
+  friendGroups           FriendGroupMember[]
+
+  // Activity & Social
+  activityFeed          ActivityFeedItem[]
+  sentMessages          Message[]         @relation("SentMessages")
+  receivedMessages      Message[]         @relation("ReceivedMessages")
+  notifications         Notification[]
+  sentInvites          Invitation[]      @relation("SentInvites")
+  receivedInvites      Invitation[]      @relation("ReceivedInvites")
+  notificationPrefs    NotificationPreferences?
+  presenceStatus       PresenceStatus?
+  socialStats          UserSocialStats?
 
   @@index([email])
   @@index([username])
 }
 
-model UserPreferences {
-  id               String    @id @default(cuid())
-  userId           String    @unique
-  theme            String    @default("default")
-  soundEnabled     Boolean   @default(true)
-  musicEnabled     Boolean   @default(true)
-  notifications    Boolean   @default(true)
-  language         String    @default("en")
-  customThemeColor String?
-  privateProfile   Boolean   @default(false)
-  showOnlineStatus Boolean   @default(true)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+model UserSocialStats {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  totalFriends      Int      @default(0)
+  activitiesJoined  Int      @default(0)
+  petsLeveled       Int      @default(0)
+  achievementsEarned Int     @default(0)
+  lastUpdated       DateTime @updatedAt
 
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationPreferences {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  friendRequests    Boolean @default(true)
+  friendActivity    Boolean @default(true)
+  petActivity       Boolean @default(true)
+  achievements      Boolean @default(true)
+  messages          Boolean @default(true)
+  invites           Boolean @default(true)
+
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PresenceStatus {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  status          String    // ONLINE, OFFLINE, IDLE, DO_NOT_DISTURB
+  lastActivity    DateTime  @default(now())
+  customStatus    String?   // Custom status message
+  location        String?   // Current page/area in the app
+  device          String?   // Web, Mobile, etc.
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ActivityStatus {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  type        String    // PLAYING, TRAINING, WALKING, etc.
+  petId       String?   // Mark petId as optional
+  startedAt   DateTime  @default(now())
+  endsAt      DateTime?
+  location    String?   // For activities like walks
+  isPublic    Boolean   @default(true)
+  details     Json?     // Additional activity details
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pet         Pet?      @relation(fields: [petId], references: [id], onDelete: SetNull) // Make pet relation optional
+
+  @@index([userId])
+  @@index([petId])
+}
+
+
+model FriendGroup {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  members     FriendGroupMember[]
+}
+
+model FriendGroupMember {
+  id            String      @id @default(cuid())
+  groupId       String
+  userId        String
+  role          String      @default("MEMBER") // OWNER, ADMIN, MEMBER
+  joinedAt      DateTime    @default(now())
+
+  group         FriendGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  content     String
+  senderId    String
+  receiverId  String
+  read        Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  sender      User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User      @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model ActivityFeedItem {
+  id          String    @id @default(cuid())
+  userId      String
+  type        String    // ACHIEVEMENT, PET_LEVEL_UP, NEW_FRIEND, etc.
+  content     String
+  data        Json?     // Additional activity data
+  visibility  String    @default("FRIENDS") // PUBLIC, FRIENDS, PRIVATE
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Pet {
@@ -123,7 +230,8 @@ model Pet {
   items       PetItem[]
   skills      PetSkill[]
   activities  ActivityLog[]
-  
+  activityStatuses ActivityStatus[] // Added this relation
+
   @@index([userId])
 }
 
@@ -150,7 +258,6 @@ model Item {
   effect      Json?     // Store effects like {"happiness": 10, "energy": 5}
   image       String?
   
-  // Relationships
   userItems   UserItem[]
   petItems    PetItem[]
 }
@@ -293,4 +400,21 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model UserPreferences {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  theme            String    @default("default")
+  soundEnabled     Boolean   @default(true)
+  musicEnabled     Boolean   @default(true)
+  notifications    Boolean   @default(true)
+  language         String    @default("en")
+  customThemeColor String?
+  privateProfile   Boolean   @default(false)
+  showOnlineStatus Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
