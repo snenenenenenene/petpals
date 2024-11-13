@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -41,21 +42,58 @@ model Session {
 model User {
   id              String    @id @default(cuid())
   name            String?
+  username        String?   @unique
   email           String?   @unique
   emailVerified   DateTime?
   image           String?
   role            String    @default("user")
   coins           Int       @default(100)
-  accounts        Account[]
-    preferences      UserPreferences?
-  sessions        Session[]
-  pets            Pet[]
-  achievements    Achievement[]
+  onlineStatus    String    @default("OFFLINE") // ONLINE, OFFLINE, PLAYING
+  lastSeen        DateTime  @default(now())
   lastLoginDate   DateTime?
   loginStreak     Int       @default(0)
   createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relationships
+  accounts        Account[]
+  sessions        Session[]
+  pets           Pet[]
+  items          UserItem[]
+  achievements   Achievement[]
+  preferences    UserPreferences?
+
+  // Friend system relations
+  friendsRequestsSent     FriendRequest[] @relation("SentFriendRequests")
+  friendsRequestsReceived FriendRequest[] @relation("ReceivedFriendRequests")
+  friends                 Friendship[]    @relation("UserFriends")
+  friendsOf               Friendship[]    @relation("FriendsOf")
+  sentInvites            Invitation[]    @relation("SentInvites")
+  receivedInvites        Invitation[]    @relation("ReceivedInvites")
+  
+  // Activity related
+  activityLogs           ActivityLog[]
+  notifications          Notification[]
 
   @@index([email])
+  @@index([username])
+}
+
+model UserPreferences {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  theme            String    @default("default")
+  soundEnabled     Boolean   @default(true)
+  musicEnabled     Boolean   @default(true)
+  notifications    Boolean   @default(true)
+  language         String    @default("en")
+  customThemeColor String?
+  privateProfile   Boolean   @default(false)
+  showOnlineStatus Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Pet {
@@ -73,26 +111,33 @@ model Pet {
   lastPlayed  DateTime  @default(now())
   lastGroomed DateTime  @default(now())
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Pet customization
+  color       String?
+  pattern     String?
+  accessories String[]  @default([])
+
+  // Relationships
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   items       PetItem[]
   skills      PetSkill[]
-
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities  ActivityLog[]
   
   @@index([userId])
 }
 
-model PetItem {
+model PetSkill {
   id        String   @id @default(cuid())
   petId     String
-  itemId    String
-  equipped  Boolean  @default(false)
+  name      String
+  level     Int      @default(1)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   pet       Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
-  item      Item     @relation(fields: [itemId], references: [id])
 
   @@index([petId])
-  @@index([itemId])
 }
 
 model Item {
@@ -104,67 +149,148 @@ model Item {
   price       Int
   effect      Json?     // Store effects like {"happiness": 10, "energy": 5}
   image       String?
+  
+  // Relationships
+  userItems   UserItem[]
   petItems    PetItem[]
 }
 
-model PetSkill {
+model UserItem {
+  id        String   @id @default(cuid())
+  userId    String
+  itemId    String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item      Item     @relation(fields: [itemId], references: [id])
+
+  @@index([userId])
+  @@index([itemId])
+}
+
+model PetItem {
   id        String   @id @default(cuid())
   petId     String
-  name      String
-  level     Int      @default(1)
+  itemId    String
+  equipped  Boolean  @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   pet       Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  item      Item     @relation(fields: [itemId], references: [id])
 
   @@index([petId])
+  @@index([itemId])
 }
 
 model Achievement {
+  id          String    @id @default(cuid())
+  userId      String
+  type        String    // daily_login, pet_level, friend_count, etc.
+  name        String
+  description String
+  progress    Int       @default(0)
+  target      Int
+  points      Int       @default(0)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model FriendRequest {
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sender      User     @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friend    User     @relation("FriendsOf", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+}
+
+model Invitation {
+  id          String   @id @default(cuid())
+  type        String   // WALK, PLAY, TRAINING, etc.
+  senderId    String
+  receiverId  String
+  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, EXPIRED
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sender      User     @relation("SentInvites", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ReceivedInvites", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model ActivityLog {
   id          String   @id @default(cuid())
   userId      String
-  type        String
-  progress    Int      @default(0)
-  completed   Boolean  @default(false)
-  completedAt DateTime?
+  petId       String
+  type        String   // WALK, PLAY, FEED, GROOM, etc.
+  duration    Int?     // Duration in minutes
+  distance    Float?   // For walks/runs
+  experience  Int      // Experience gained
+  rewards     Json?    // Rewards earned {"coins": 50, "items": ["toy_ball"]}
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pet         Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([petId])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // FRIEND_REQUEST, INVITATION, ACHIEVEMENT, etc.
+  title       String
+  message     String
+  read        Boolean  @default(false)
+  data        Json?    // Additional data specific to notification type
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
-model DailyReward {
-  id        String   @id @default(cuid())
-  userId    String
-  day       Int
-  claimed   Boolean  @default(false)
-  claimedAt DateTime?
-  reward    Json     // Store reward data like {"coins": 100, "items": ["food"]}
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-}
-
 model VerificationToken {
-  id         String   @id @default(cuid())
   identifier String
   token      String   @unique
   expires    DateTime
 
   @@unique([identifier, token])
-}
-
-model UserPreferences {
-  id               String    @id @default(cuid())
-  userId           String    @unique
-  theme            String    @default("default") // default, dark, custom
-  soundEnabled     Boolean   @default(true)
-  musicEnabled     Boolean   @default(true)
-  notifications    Boolean   @default(true)
-  language         String    @default("en")
-  customThemeColor String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

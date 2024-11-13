@@ -2,6 +2,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
 import { Button } from '@/components/ui';
 import {
   Bone,

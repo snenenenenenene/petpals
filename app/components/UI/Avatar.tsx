@@ -1,4 +1,5 @@
 // components/ui/Avatar.tsx
+import React from 'react';
 import { forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
